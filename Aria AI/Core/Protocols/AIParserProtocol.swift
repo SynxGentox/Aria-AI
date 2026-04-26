@@ -8,5 +8,5 @@
 import FoundationModels
 
 protocol AIParserProtocol {
-    func parser(prompt: String) async throws-> AriaEvent
+    func parse(prompt: String) async throws-> AriaEvent
 }
