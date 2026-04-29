@@ -10,8 +10,32 @@ import Foundation
 
 struct AIParserService: AIParserProtocol {
     private let session = LanguageModelSession()
+    private let model = SystemLanguageModel.default
     
     func parse(prompt: String) async throws -> AriaEvent {
+        
+        // Check availability first
+        switch model.availability {
+            case .available:
+                break
+            case .unavailable(.deviceNotEligible):
+                throw NSError(domain: "AIParserService", code: 3,
+                              userInfo: [NSLocalizedDescriptionKey:
+                                            "Aria requires Apple Intelligence — iPhone 15 Pro or later."])
+            case .unavailable(.appleIntelligenceNotEnabled):
+                throw NSError(domain: "AIParserService", code: 4,
+                              userInfo: [NSLocalizedDescriptionKey:
+                                            "Please enable Apple Intelligence in Settings."])
+            case .unavailable(.modelNotReady):
+                throw NSError(domain: "AIParserService", code: 5,
+                              userInfo: [NSLocalizedDescriptionKey:
+                                            "Model not ready. Please wait."])
+            case .unavailable(_):
+                throw NSError(domain: "AIParserService", code: 6,
+                              userInfo: [NSLocalizedDescriptionKey:
+                                            "Apple Intelligence unavailable."])
+        }
+        
         let today = ISO8601DateFormatter().string(from: Date())
         
         let instruction = """
@@ -29,6 +53,8 @@ struct AIParserService: AIParserProtocol {
                 - Beyond that, use the exact date mentioned
                 - Always return date in yyyy-MM-dd format
                 - Always return time in HH:mm 24-hour format
+                - If only date is given then assign task to current time on the provided date
+                - If only time is given then assign task to current date on the provided time
                 
             If a field has no information, return nil for it.
             

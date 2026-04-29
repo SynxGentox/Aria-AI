@@ -16,17 +16,21 @@ class AriaViewModel {
     var eventSaved: Bool = false
     var errorMsg: String?
     var todaysEvents: [EKEvent] = []
+    var isProcessing: Bool = false
+    private var pendingCommand: String? = nil
     
     private let useCase: AriaEventUseCase
-    private let voice: VoiceCaptureService
+    private let voice: VoiceCaptureProtocol
     private var listeningTask: Task<Void, Never>?
     
-    init() {
+    init(voice: VoiceCaptureProtocol) {
         self.useCase = AriaEventUseCase(
             parser: AIParserService(),
-            calendar: CalendarService()
+            calendar: CalendarService(),
+            notification: NotificationsService.shared
         )
-        self.voice = VoiceCaptureService()
+        NotificationsService.shared.requestPermission { _ in }
+        self.voice = voice
     }
     
     func startListening() {
@@ -52,6 +56,7 @@ class AriaViewModel {
                 errorMsg = error.localizedDescription
             }
             isListening = false
+            processPrompt()
         }
     }
     
@@ -59,14 +64,44 @@ class AriaViewModel {
         voice.stopListening()
         isListening = false
         listeningTask?.cancel()
+        processPrompt()
+    }
+    
+    private func processPrompt() {
+        guard !transcribedText.isEmpty, !isProcessing else { return }
+        guard !transcribedText.isEmpty else { return }
+        
+        let promptToProcess = pendingCommand != nil ? "\(transcribedText) \(pendingCommand ?? "")" : transcribedText
+        isProcessing = true
         Task {
             do {
-                try await useCase.execute(prompt: transcribedText)
+                try await useCase.execute(prompt: promptToProcess)
                 eventSaved = true
-            } catch {
-                errorMsg = error.localizedDescription
+                
+                // Hold the success state for 2 seconds, then reset
+                try? await Task.sleep(nanoseconds: 1_600_000_000)
+                eventSaved = false
+                transcribedText = ""
+                isProcessing = false
+            } catch let error as NSError {
+                if error.domain == "AriaViewModel" && error.code == 2 {
+                    pendingCommand = promptToProcess
+                    errorMsg = "What time should I schedule this task?"
+                    
+                    // Auto-start listening again after a brief pause
+                    try? await Task.sleep(nanoseconds: 500_000_000)
+                    startListening()
+                } else {
+                    errorMsg = error.localizedDescription
+                    pendingCommand = nil
+                }
+                isProcessing = false
             }
         }
+    }
+    
+    func submitText() {
+        processPrompt()
     }
     
     func fetchTodaysEvents() {

@@ -10,10 +10,12 @@ import Foundation
 class AriaEventUseCase {
     private let parser: AIParserProtocol
     let calendar: CalendarRepositoryProtocol
+    private let notification: NotificationsProtocol
     
-    init(parser: AIParserProtocol, calendar: CalendarRepositoryProtocol) {
+    init(parser: AIParserProtocol, calendar: CalendarRepositoryProtocol, notification: NotificationsProtocol) {
         self.parser = parser
         self.calendar = calendar
+        self.notification = notification
     }
     
     func execute(prompt: String) async throws {
@@ -27,5 +29,11 @@ class AriaEventUseCase {
         }
         let event = try await parser.parse(prompt: prompt)
         try await calendar.save(event: event)
+        
+        // fetch the just saved event
+        if let savedEvent = calendar.fetchToday().last {
+            notification.taskReminder(event: savedEvent)
+        }
     }
+    
 }

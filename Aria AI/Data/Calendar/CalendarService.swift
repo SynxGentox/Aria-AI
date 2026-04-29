@@ -24,7 +24,6 @@ class CalendarService: CalendarRepositoryProtocol {
         ekEvent.location = event.location
         ekEvent.calendar = store.defaultCalendarForNewEvents
         
-        // Convert AriaEvent strings → Date objects
         let formatter = DateFormatter()
         let formats = ["yyyy-MM-dd HH:mm", "yyyy-MM-dd hh:mm a"]
         
@@ -60,7 +59,6 @@ class CalendarService: CalendarRepositoryProtocol {
         ekEvent.startDate = startDate
         ekEvent.endDate = finalEndDate
         try store.save(ekEvent, span: .thisEvent)
-        print("✅ Event saved:", ekEvent.title ?? "")
     }
     
     func fetchToday() -> [EKEvent] {
