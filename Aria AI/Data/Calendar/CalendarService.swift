@@ -8,28 +8,39 @@
 import EventKit
 
 class CalendarService: CalendarRepositoryProtocol {
+    
+    /// EKEventStore is an IPC (Inter-Process Communication) connection to the iOS Calendar daemon running in the background of the iPhone.
+    /// EKEventStore is computationally heavy by declaring it as a single private let at class level we are opening the database connection once and keep it alive in memory.
+    /// we didnt put it inside teh save function bcz if we did the app would lag because it would have to rebuild it again and again each time save function accessed.
     private let store = EKEventStore()
     
     func requestAccess() async -> Bool {
         do {
+            // iOS apps lives in a sandbox they cant access decive data without permission.
+            // await pauses the app's task and yeilds the thread back for brief moment unitl the user either deny or allows the permission.
             return try await store.requestFullAccessToEvents()
         } catch {
             return false
         }
     }
     
-    func save(event: AriaEvent) async throws {
+    /// saves the event returned form the AI parser service in the abstract JSON format by LLM to the calendar.
+    /// - Parameter event: event received from AI parser service.
+    func save(event: AriaEvent) async throws -> EKEvent {
         let ekEvent = EKEvent(eventStore: store)
         ekEvent.title = event.title
         ekEvent.location = event.location
-        ekEvent.calendar = store.defaultCalendarForNewEvents
+        ekEvent.calendar = store.defaultCalendarForNewEvents    // uses the default calendar to store events.
         
+        // takes the LLM string and uses DateFormatter to convert it into a unix timestamp (seconds since 1970).
+        // we kept both formats to catch any type of date format, Either 24 hours or 12 hours format.
         let formatter = DateFormatter()
         let formats = ["yyyy-MM-dd HH:mm", "yyyy-MM-dd hh:mm a"]
         
         
         let dateString = event.date ?? currentDateString()
         guard let startTimeString = event.startTime else {
+            // throw error if LLM model didnt receive time of event.
             throw NSError(domain: "CalendarRepository", code: 2,
                 userInfo: [NSLocalizedDescriptionKey: "No start time provided"])
         }
@@ -58,7 +69,9 @@ class CalendarService: CalendarRepositoryProtocol {
 
         ekEvent.startDate = startDate
         ekEvent.endDate = finalEndDate
+        // (span: .thisEvent) tells iOS that if this happened to be a recurring event (like "every Tuesday"), it should only modify this specific instance, not the entire series.
         try store.save(ekEvent, span: .thisEvent)
+        return ekEvent
     }
     
     func fetchToday() -> [EKEvent] {

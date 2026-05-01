@@ -9,7 +9,7 @@ import EventKit
 
 protocol CalendarRepositoryProtocol {
     func requestAccess() async -> Bool
-    func save(event: AriaEvent) async throws
+    func save(event: AriaEvent) async throws -> EKEvent
     func fetchToday() -> [EKEvent]
 }
 

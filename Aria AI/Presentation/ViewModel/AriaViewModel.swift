@@ -9,6 +9,7 @@ import Foundation
 import Observation
 import EventKit
 
+/// Passes and receives the data to UseCase class and pushes the voice input to the VoiceService through protocol.
 @Observable
 class AriaViewModel {
     var transcribedText: String = ""
@@ -24,21 +25,24 @@ class AriaViewModel {
     private var listeningTask: Task<Void, Never>?
     
     init(voice: VoiceCaptureProtocol) {
+        let notifications = NotificationsService()
+            notifications.requestPermission { _ in }
         self.useCase = AriaEventUseCase(
             parser: AIParserService(),
             calendar: CalendarService(),
-            notification: NotificationsService.shared
+            notification: notifications
         )
-        NotificationsService.shared.requestPermission { _ in }
         self.voice = voice
     }
     
+    /// process the input when voice input starts.
     func startListening() {
         guard !isListening else { return }
         isListening = true
         transcribedText = ""
         errorMsg  = nil
         
+        // fires the mic request when voice inputs.
         listeningTask = Task {
             let authorized = await voice.requestAuthorization()
             guard authorized else {
@@ -47,6 +51,7 @@ class AriaViewModel {
                 return
             }
             
+            // if the permission is granted starts the listening process and takes the input.
             do {
                 let stream = try voice.startListening()
                 for await text in stream {
@@ -55,11 +60,14 @@ class AriaViewModel {
             } catch {
                 errorMsg = error.localizedDescription
             }
+            
+            // resets the bool for next voice input.
             isListening = false
             processPrompt()
         }
     }
     
+    /// stops the voice engine, resets the bool, resets the input, resets teh processPrempt func through guard condition in processPrompt func.
     func stopListening() {
         voice.stopListening()
         isListening = false
@@ -67,10 +75,15 @@ class AriaViewModel {
         processPrompt()
     }
     
+    /// Process the prompt
     private func processPrompt() {
+        
+        // checks whether input is empty or not and is any prompt in process or not.
         guard !transcribedText.isEmpty, !isProcessing else { return }
+        // checks whether input is empty or not.
         guard !transcribedText.isEmpty else { return }
         
+        // makes a single prompt to process, pendingCommand is for the condition in case user doesnt mentions the time of task.
         let promptToProcess = pendingCommand != nil ? "\(transcribedText) \(pendingCommand ?? "")" : transcribedText
         isProcessing = true
         Task {
@@ -78,8 +91,9 @@ class AriaViewModel {
                 try await useCase.execute(prompt: promptToProcess)
                 eventSaved = true
                 
-                // Hold the success state for 2 seconds, then reset
-                try? await Task.sleep(nanoseconds: 1_600_000_000)
+                // Hold the success state for 2 seconds, then reset.
+                try? await Task.sleep(nanoseconds: 2_000_000_000)
+                // resets the states for next input.
                 eventSaved = false
                 transcribedText = ""
                 isProcessing = false
@@ -88,8 +102,8 @@ class AriaViewModel {
                     pendingCommand = promptToProcess
                     errorMsg = "What time should I schedule this task?"
                     
-                    // Auto-start listening again after a brief pause
-                    try? await Task.sleep(nanoseconds: 500_000_000)
+                    // Auto-start listening again after a brief pause.
+                    try? await Task.sleep(nanoseconds: 1_000_000_000)
                     startListening()
                 } else {
                     errorMsg = error.localizedDescription
@@ -100,10 +114,12 @@ class AriaViewModel {
         }
     }
     
+    // a function to access the processPrompt to fire it manually from UI.
     func submitText() {
         processPrompt()
     }
     
+    // fetches the current day tasks.
     func fetchTodaysEvents() {
         todaysEvents = useCase.calendar.fetchToday()
     }

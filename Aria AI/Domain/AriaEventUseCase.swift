@@ -7,6 +7,7 @@
 
 import Foundation
 
+/// Links the services together.
 class AriaEventUseCase {
     private let parser: AIParserProtocol
     let calendar: CalendarRepositoryProtocol
@@ -18,6 +19,8 @@ class AriaEventUseCase {
         self.notification = notification
     }
     
+    /// Exectues the calendar request, passes the prompt to AI, saves the event returned by AI, triggers notificaition for the event saved.
+    /// - Parameter prompt: text input by user.
     func execute(prompt: String) async throws {
         let hasAccess = await calendar.requestAccess()
         guard hasAccess else {
@@ -28,12 +31,9 @@ class AriaEventUseCase {
             )
         }
         let event = try await parser.parse(prompt: prompt)
-        try await calendar.save(event: event)
+        let saved = try await calendar.save(event: event)
         
-        // fetch the just saved event
-        if let savedEvent = calendar.fetchToday().last {
-            notification.taskReminder(event: savedEvent)
-        }
+        // fetch the saved event.
+        notification.taskReminder(event: saved)
     }
-    
 }

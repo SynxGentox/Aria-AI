@@ -12,6 +12,9 @@ struct AIParserService: AIParserProtocol {
     private let session = LanguageModelSession()
     private let model = SystemLanguageModel.default
     
+    /// parser function to process the prompt, instruction and date provided to get an event
+    /// - Parameter prompt: event provided by the user to assign an event.
+    /// - Returns: returns a JSON format string of the event.
     func parse(prompt: String) async throws -> AriaEvent {
         
         // Check availability first
@@ -60,6 +63,13 @@ struct AIParserService: AIParserProtocol {
             
             Voice command: \(prompt)
             """
+        
+        
+// MARK: - The full runtime pipeline.
+        // 1. The Packaging: -   Language Model Session takes the prompt and the schema.
+        // 2. The Request: -     Sends both prompt and schema to the Apple Intelligence.
+        // 3. Structured Gen.: - Instead of generating a free floating text Apple uses a technique called Grammer-Constrained Generation (or Tool Calling). It can only return the text that matches the blueprint (schema) and it is forced to output a perfectly formatted JSON string.
+        // 4. The Decoding: -    The framework receives teh JSON string form LLM model, silently decodes it back to Data Model struct and hands it to the .content wrapper.
         
         return try await session.respond(
             to: instruction,
