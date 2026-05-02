@@ -3,6 +3,17 @@
 A fully on-device voice-to-calendar assistant built with Apple Intelligence. 
 Speak a task naturally — Aria parses it, saves it to your calendar, and reminds you 15 minutes before.
 
+---
+
+## Performance
+
+- Memory: ~16MB idle, peaks ~28MB - 30MB under load
+- CPU: 0% idle, Energy Impact: Low
+- Benchmarked on iPad 10th gen, A14 Bionic, 4GB RAM
+- ```Note: 77MB spikes are RTIInputSystemClient errors.```
+
+---
+
 ## Features
 - Voice input via SFSpeechRecognizer with real-time transcription
 - On-device natural language parsing using FoundationModels (Apple Intelligence)
@@ -32,3 +43,10 @@ AIParserService    CalendarService    NotificationsService
 
 ## Privacy
 All processing happens on-device. No data leaves the device at any point.
+
+## Screenshots
+ - <img src="Aria AI/Assets/light_mode.png" width="250">
+ - <img src="Aria AI/Assets/dark_mode.png" width="250">
+ - <img src="Aria AI/Assets/memory_graph.png" width="250">
+ - <img src="Aria AI/Assets/cpu_graph.png" width="250">
+ - <img src="Aria AI/Assets/energy_graph.png" width="250">
