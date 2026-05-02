@@ -27,14 +27,16 @@ Speak a task naturally — Aria parses it, saves it to your calendar, and remind
 ## Architecture
 
 Clean Architecture with Protocol-oriented dependency injection
+```
 Voice Input → VoiceCaptureService (AsyncStream)
-↓
-AriaViewModel (@Observable)
-↓
-AriaEventUseCase (Business Logic)
-↙              ↓              ↘
+                      ↓
+              AriaViewModel (@Observable)
+                      ↓
+            AriaEventUseCase (Business Logic)
+            ↙              ↓              ↘
 AIParserService    CalendarService    NotificationsService
 (FoundationModels)   (EventKit)      (UserNotifications)
+```
 
 ---
 
