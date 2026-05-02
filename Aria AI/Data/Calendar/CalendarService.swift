@@ -38,21 +38,22 @@ class CalendarService: CalendarRepositoryProtocol {
         let formats = ["yyyy-MM-dd HH:mm", "yyyy-MM-dd hh:mm a"]
         
         
-        let dateString = event.date ?? currentDateString()
+        let dateString = event.date ?? nil
         guard let startTimeString = event.startTime else {
             // throw error if LLM model didnt receive time of event.
             throw NSError(domain: "CalendarRepository", code: 2,
                 userInfo: [NSLocalizedDescriptionKey: "No start time provided"])
         }
         
-        let startString = "\(dateString) \(startTimeString)"
+        let startString = "\(dateString ?? "") \(startTimeString)"
         var startDate: Date?
         var endDate: Date?
 
-        let endString = event.endTime.map { "\(dateString) \($0)" }
+        let endString = event.endTime.map { "\(dateString ?? "") \($0)" }
 
         for format in formats {
             formatter.dateFormat = format
+            formatter.locale = Locale(identifier: "en_US_POSIX")
             startDate = formatter.date(from: startString)
             if let endStr = endString {
                 endDate = formatter.date(from: endStr)

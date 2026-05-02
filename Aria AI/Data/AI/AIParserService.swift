@@ -39,10 +39,21 @@ struct AIParserService: AIParserProtocol {
                                             "Apple Intelligence unavailable."])
         }
         
-        let today = ISO8601DateFormatter().string(from: Date())
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd"
+        let currentDateString = dateFormatter.string(from: Date())
+
+        let timeFormatter = DateFormatter()
+        timeFormatter.dateFormat = "HH:mm"
+        let currentTimeString = timeFormatter.string(from: Date())
+        
         
         let instruction = """
-            Today's Date is \(today).
+            
+            Current System Context:
+                - Date: \(currentDateString)
+                - Time: \(currentTimeString)
+                
             Extract calendar event details from this voice command.
             Time inference rules:
                 - If user says "10 o'clock" or "10:00" with no AM/PM:
@@ -56,8 +67,10 @@ struct AIParserService: AIParserProtocol {
                 - Beyond that, use the exact date mentioned
                 - Always return date in yyyy-MM-dd format
                 - Always return time in HH:mm 24-hour format
-                - If only date is given then assign task to current time on the provided date
-                - If only time is given then assign task to current date on the provided time
+                - If no time is mentioned by the user at all, return nil for startTime. Do NOT infer, assume, or assign any time.
+                - If only date is given with no time, return nil for startTime
+                - If only time is given with no date, use today's date and return that time
+                - Only populate startTime if the user explicitly mentioned a time
                 
             If a field has no information, return nil for it.
             
