@@ -10,7 +10,6 @@ Speak a task naturally — Aria parses it, saves it to your calendar, and remind
 - Memory: ~16MB idle, peaks ~28MB - 30MB under load
 - CPU: 0% idle, Energy Impact: Low
 - Benchmarked on iPad 10th gen, A14 Bionic, 4GB RAM
-- ```Note: 77MB spikes are RTIInputSystemClient errors.```
 
 ---
 
