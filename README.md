@@ -15,6 +15,7 @@ Speak a task naturally — Aria parses it, saves it to your calendar, and remind
 ---
 
 ## Features
+
 - Voice input via SFSpeechRecognizer with real-time transcription
 - On-device natural language parsing using FoundationModels (Apple Intelligence)
 - Automatic EventKit calendar integration
@@ -22,7 +23,10 @@ Speak a task naturally — Aria parses it, saves it to your calendar, and remind
 - History view of today's assigned tasks
 - Manual text input fallback
 
+---
+
 ## Architecture
+
 Clean Architecture with Protocol-oriented dependency injection
 Voice Input → VoiceCaptureService (AsyncStream)
 ↓
@@ -33,7 +37,10 @@ AriaEventUseCase (Business Logic)
 AIParserService    CalendarService    NotificationsService
 (FoundationModels)   (EventKit)      (UserNotifications)
 
+---
+
 ## Tech Stack
+
 - SwiftUI + @Observable
 - FoundationModels — fully on-device, zero API calls, private by design
 - EventKit — calendar read/write
@@ -41,10 +48,16 @@ AIParserService    CalendarService    NotificationsService
 - UserNotifications — local push reminders
 - Protocol DI — all services injected via protocols, fully testable
 
+---
+
 ## Privacy
+
 All processing happens on-device. No data leaves the device at any point.
 
+---
+
 ## Screenshots
+
  - <img src="Aria AI/Assets/light_mode.png" width="250">
  - <img src="Aria AI/Assets/dark_mode.png" width="250">
  - <img src="Aria AI/Assets/memory_graph.png" width="250">
